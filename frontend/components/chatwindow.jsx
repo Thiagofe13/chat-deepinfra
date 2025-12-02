@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+// frontend/components/ChatWindow.jsx
+import { useEffect, useRef, useState } from "react";
 import MessageBubble from "./MessageBubble";
 
-export default function ChatWindow({ conversation, addMessage }) {
+export default function ChatWindow({ conversation, appendToConversation, updateConversationMessages }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef(null);
@@ -10,76 +11,98 @@ export default function ChatWindow({ conversation, addMessage }) {
     scrollToBottom();
   }, [conversation]);
 
-  const scrollToBottom = () => {
+  function scrollToBottom() {
     if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: "smooth" });
-  };
+  }
 
-  const sendMessage = async () => {
-    if (!input.trim() || !conversation) return;
-    const userText = input.trim();
-    addMessage(userText, "user");
+  async function send() {
+    if (!input.trim()) return;
+    if (!conversation) return alert("Crie ou selecione uma conversa antes.");
+    const text = input.trim();
+    appendToConversation(conversation.id, { role: "user", text });
     setInput("");
     setLoading(true);
+
+    // prepare history for API: map to {role, content}
+    const historyForApi = (conversation.messages || []).map(m => ({
+      role: m.role === "user" ? "user" : "assistant",
+      content: m.text
+    }));
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userText, history: conversation.messages })
+        body: JSON.stringify({ message: text, history: historyForApi })
       });
       const data = await res.json();
       if (data.error) {
-        addMessage("Erro: " + data.error, "bot");
+        appendToConversation(conversation.id, { role: "bot", text: "Erro: " + (data.error || "sem detalhe") });
       } else {
-        typeWriter(data.text);
+        // briefly show info about model
+        appendToConversation(conversation.id, { role: "bot", text: `Respondendo com: ${data.model}` });
+        await typeWriter(conversation.id, data.text || data.response || "");
       }
     } catch (err) {
-      addMessage("Erro de conexão.", "bot");
+      appendToConversation(conversation.id, { role: "bot", text: "Erro de conexão." });
+      console.error(err);
     } finally {
       setLoading(false);
+      scrollToBottom();
     }
-  };
+  }
 
-  const typeWriter = (text) => {
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i === 0) addMessage("", "bot"); // cria o balão
-      if (i < text.length) {
-        const messages = conversation.messages;
-        messages[messages.length - 1].text += text[i];
-        addMessage(messages[messages.length - 1].text, "bot");
-        i++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 20);
-  };
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-  const handleKey = (e) => {
+  async function typeWriter(convId, text) {
+    // create empty bot bubble
+    appendToConversation(convId, { role: "bot", text: "" });
+    for (let i = 0; i < text.length; i++) {
+      updateConversationMessages(convId, (msgs) => {
+        const copy = [...msgs];
+        const lastIndex = copy.length - 1;
+        copy[lastIndex] = { ...copy[lastIndex], text: (copy[lastIndex].text || "") + text[i] };
+        return copy;
+      });
+      if (i % 3 === 0) await sleep(18); // adjust speed here
+    }
+  }
+
+  function handleKey(e) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      send();
     }
-  };
+  }
+
+  if (!conversation) {
+    return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#666" }}>Selecione ou crie uma conversa</div>;
+  }
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-      <div style={{ flex: 1, overflowY: "auto", padding: "20px", backgroundColor: "#fefefe" }}>
-        {conversation && conversation.messages.map((msg, idx) => (
-          <MessageBubble key={idx} text={msg.text} role={msg.role} />
+      <div style={{ borderBottom: "1px solid #eee", padding: 12, background: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontWeight: 700 }}>{conversation.name}</div>
+        <div style={{ fontSize: 13, color: "#666" }}>{conversation.messages.length} mensagens</div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: 20, background: "#f7f8fa" }}>
+        {conversation.messages.map((m, i) => (
+          <MessageBubble key={i} role={m.role === "user" ? "user" : "bot"} text={m.text} />
         ))}
         <div ref={chatEndRef}></div>
       </div>
-      <div style={{ display: "flex", padding: "10px", borderTop: "1px solid #ccc", backgroundColor: "#fff" }}>
+
+      <div style={{ padding: 12, display: "flex", gap: 8, borderTop: "1px solid #eee", background: "#fff" }}>
         <textarea
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKey}
-          style={{ flex: 1, padding: "10px", borderRadius: "5px", border: "1px solid #ccc", resize: "none" }}
           rows={2}
           placeholder="Digite sua mensagem..."
+          style={{ flex: 1, padding: 10, borderRadius: 10, border: "1px solid #ddd", resize: "none" }}
         />
-        <button onClick={sendMessage} disabled={loading} style={{ marginLeft: "10px", padding: "10px 20px", cursor: "pointer" }}>
+        <button onClick={send} disabled={loading} style={{ padding: "10px 16px", borderRadius: 10, background: "#007aff", color: "#fff", border: "none", cursor: "pointer" }}>
           {loading ? "..." : "Enviar"}
         </button>
       </div>

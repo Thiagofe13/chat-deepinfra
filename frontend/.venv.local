@@ -1,0 +1,4 @@
+NEXT_PUBLIC_API_URL=http://localhost:8000
+DEEPINFRA_API_KEY=nLc27kgNQTwImh0KvgfcdnsMnBvLwYRi
+DEFAULT_MODEL=mistralai/Mistral-7B-Instruct-v0.2
+HEAVY_MODEL=meta-llama/Meta-Llama-3.1-70B-Instruct

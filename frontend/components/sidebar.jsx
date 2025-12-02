@@ -1,37 +1,26 @@
-import { useState } from "react";
+"use client";
 
-export default function Sidebar({ conversations, createConversation, selectConversation }) {
-  const [newName, setNewName] = useState("");
-
-  const handleCreate = () => {
-    if (newName.trim() === "") return;
-    createConversation(newName.trim());
-    setNewName("");
-  };
-
+export default function Sidebar({ conversations, createConversation, selectConversation, currentId }) {
   return (
-    <div style={{ width: "250px", borderRight: "1px solid #ccc", backgroundColor: "#fff", display: "flex", flexDirection: "column" }}>
-      <div style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
-        <input
-          type="text"
-          placeholder="Nome da conversa"
-          value={newName}
-          onChange={e => setNewName(e.target.value)}
-          style={{ width: "100%", padding: "5px" }}
-        />
-        <button onClick={handleCreate} style={{ marginTop: "5px", width: "100%", padding: "5px", cursor: "pointer" }}>
-          Nova Conversa
-        </button>
-      </div>
-      <div style={{ flex: 1, overflowY: "auto" }}>
-        {conversations.map(conv => (
-          <div
+    <div className="w-64 bg-white border-r h-screen p-4 flex flex-col">
+      <button
+        onClick={createConversation}
+        className="bg-blue-500 text-white py-2 rounded mb-4 w-full"
+      >
+        ➕ Nova Conversa
+      </button>
+
+      <div className="flex flex-col gap-2 overflow-y-auto">
+        {conversations.map((conv) => (
+          <button
             key={conv.id}
-            onClick={() => selectConversation(conv)}
-            style={{ padding: "10px", borderBottom: "1px solid #eee", cursor: "pointer", backgroundColor: conv === conversations[0] ? "#f0f0f0" : "white" }}
+            onClick={() => selectConversation(conv.id)}
+            className={`p-2 text-left rounded ${
+              conv.id === currentId ? "bg-blue-200" : "bg-gray-100 hover:bg-gray-200"
+            }`}
           >
-            {conv.name}
-          </div>
+            📌 {conv.name}
+          </button>
         ))}
       </div>
     </div>

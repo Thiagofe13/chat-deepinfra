@@ -1,39 +1,48 @@
+// frontend/app/page.js
+"use client";
 import { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import ChatWindow from "../components/ChatWindow";
 
-export default function Home() {
+export default function Page() {
   const [conversations, setConversations] = useState([]);
-  const [currentConv, setCurrentConv] = useState(null);
+  const [currentId, setCurrentId] = useState(null);
 
   const createConversation = (name) => {
-    const newConv = { id: Date.now(), name, messages: [] };
-    setConversations([newConv, ...conversations]);
-    setCurrentConv(newConv);
+    const id = Date.now();
+    const newConv = { id, name, messages: [] };
+    setConversations(prev => [newConv, ...prev]);
+    setCurrentId(id);
   };
 
-  const addMessage = (text, role) => {
-    if (!currentConv) return;
-    const updatedConv = {
-      ...currentConv,
-      messages: [...currentConv.messages, { text, role }]
-    };
-    setCurrentConv(updatedConv);
-    setConversations(conversations.map(c => c.id === currentConv.id ? updatedConv : c));
+  const selectConversation = (id) => setCurrentId(id);
+
+  const appendToConversation = (convId, message) => {
+    setConversations(prev => prev.map(c => c.id === convId ? { ...c, messages: [...c.messages, message] } : c));
   };
 
-  const selectConversation = (conv) => setCurrentConv(conv);
+  const updateConversationMessages = (convId, updater) => {
+    setConversations(prev => prev.map(c => {
+      if (c.id !== convId) return c;
+      const newMessages = updater([...c.messages]);
+      return { ...c, messages: newMessages };
+    }));
+  };
+
+  const currentConv = conversations.find(c => c.id === currentId) ?? null;
 
   return (
-    <div style={{ display: "flex", height: "100vh" }}>
+    <div style={{ display: "flex", height: "100vh", background: "#f3f4f6" }}>
       <Sidebar
         conversations={conversations}
         createConversation={createConversation}
         selectConversation={selectConversation}
+        currentId={currentId}
       />
       <ChatWindow
         conversation={currentConv}
-        addMessage={addMessage}
+        appendToConversation={appendToConversation}
+        updateConversationMessages={updateConversationMessages}
       />
     </div>
   );
