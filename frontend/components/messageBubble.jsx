@@ -1,13 +1,7 @@
-export default function MessageBubble({ role, content }) {
-  const isUser = role === 'user'
-  const baseClass =
-    'p-3 rounded-xl max-w-[80%] break-words text-sm'
-  const userClass = 'bg-blue-600 text-white self-end rounded-br-none'
-  const botClass = 'bg-gray-700 text-gray-200 self-start rounded-bl-none border border-gray-600'
-
-  return (
-    <div className={`${baseClass} ${isUser ? userClass : botClass}`}>
-      {content}
-    </div>
-  )
+export default function MessageBubble({ text, role }) {
+  const styles = {
+    user: { backgroundColor: "#0070f3", color: "#fff", alignSelf: "flex-end", padding: "10px 15px", borderRadius: "12px", maxWidth: "70%", marginBottom: "5px" },
+    bot: { backgroundColor: "#e0e0e0", color: "#000", alignSelf: "flex-start", padding: "10px 15px", borderRadius: "12px", maxWidth: "70%", marginBottom: "5px" },
+  };
+  return <div style={role === "user" ? styles.user : styles.bot}>{text}</div>;
 }
