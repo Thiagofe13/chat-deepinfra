@@ -1,53 +1,6 @@
-let history = []; // Memória da conversa no navegador
+let conversations = [];
+let currentHistory = [];
 
-async function sendMessage() {
-    const input = document.getElementById('input');
-    const chat = document.getElementById('chat');
-    const btn = document.getElementById('send');
-    const text = input.value.trim();
-
-    if (!text) return;
-
-    // 1. Mostra mensagem do usuário
-    addBubble(text, 'user');
-    input.value = '';
-    btn.disabled = true;
-    btn.innerText = '...';
-
-    try {
-        // 2. Envia para a API serverless da Vercel
-        const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                message: text,
-                history: history
-            })
-        });
-
-        const data = await response.json();
-
-        if (data.error) {
-            addBubble("Erro: " + data.error, 'error');
-        } else {
-            addBubble(data.text, 'bot');
-
-            // 3. Atualiza histórico
-            history.push({ role: "user", content: text });
-            history.push({ role: "assistant", content: data.text });
-        }
-
-    } catch (e) {
-        console.error(e);
-        addBubble("Erro de conexão com o servidor.", 'error');
-    }
-
-    btn.disabled = false;
-    btn.innerText = 'ENVIAR';
-    input.focus();
-}
-
-// Cria bolhas de chat
 function addBubble(text, type) {
     const chat = document.getElementById('chat');
     const div = document.createElement('div');
@@ -57,14 +10,58 @@ function addBubble(text, type) {
     chat.scrollTop = chat.scrollHeight;
 }
 
-// Limpar chat
-function resetChat() {
-    history = [];
-    document.getElementById('chat').innerHTML =
-        '<div class="message bot">Memória apagada. Vamos começar de novo?</div>';
+async function sendMessage() {
+    const input = document.getElementById('input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    addBubble(text, 'user');
+    currentHistory.push({ role: 'user', content: text });
+    input.value = '';
+
+    try {
+        const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text, history: currentHistory })
+        });
+
+        const data = await res.json();
+        addBubble(data.text, 'bot');
+        currentHistory.push({ role: 'assistant', content: data.text });
+    } catch (err) {
+        addBubble("Erro de conexão 😓", 'bot');
+        console.error(err);
+    }
 }
 
-// Enviar com ENTER
+function newConversation() {
+    if (currentHistory.length) {
+        conversations.push(currentHistory);
+        updateHistoryList();
+    }
+    currentHistory = [];
+    document.getElementById('chat').innerHTML = '<div class="message bot">Nova conversa iniciada 😄</div>';
+}
+
+function updateHistoryList() {
+    const histDiv = document.getElementById('history');
+    histDiv.innerHTML = '<h3>Conversas</h3>';
+    conversations.forEach((conv, i) => {
+        const btn = document.createElement('button');
+        btn.innerText = `Conversa ${i+1}`;
+        btn.onclick = () => loadConversation(i);
+        histDiv.appendChild(btn);
+    });
+}
+
+function loadConversation(index) {
+    currentHistory = [...conversations[index]];
+    const chatDiv = document.getElementById('chat');
+    chatDiv.innerHTML = '';
+    currentHistory.forEach(msg => addBubble(msg.content, msg.role === 'user' ? 'user' : 'bot'));
+}
+
 document.getElementById('input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
