@@ -1,21 +1,13 @@
 export default function MessageBubble({ role, content }) {
-  const isUser = role === "user";
+  const isUser = role === 'user'
+  const baseClass =
+    'p-3 rounded-xl max-w-[80%] break-words text-sm'
+  const userClass = 'bg-blue-600 text-white self-end rounded-br-none'
+  const botClass = 'bg-gray-700 text-gray-200 self-start rounded-bl-none border border-gray-600'
 
   return (
-    <div className={`w-full flex ${isUser ? "justify-end" : "justify-start"} mb-3`}>
-      <div
-        className={`
-          max-w-[75%] px-4 py-3 rounded-2xl text-[15px] leading-relaxed
-          shadow-sm
-          ${isUser
-            ? "bg-[#0a7cff] text-white" 
-            : "bg-white text-[#1a1a1a] border border-gray-200"
-          }
-        `}
-        style={{ letterSpacing: "0.2px" }}
-      >
-        {content}
-      </div>
+    <div className={`${baseClass} ${isUser ? userClass : botClass}`}>
+      {content}
     </div>
-  );
+  )
 }
