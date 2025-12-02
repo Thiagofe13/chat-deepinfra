@@ -1,18 +1,14 @@
-/* frontend/app/globals.css */
-:root {
-  --bg: #f3f4f6;
-  --card: #fff;
-  --primary: #007aff;
-  --muted: #666;
-}
+/* Cursor piscando */
+@keyframes blink {0%,50%,100%{opacity:1}25%,75%{opacity:0}}
+.cursor{display:inline-block;width:1px;background-color:currentColor;margin-left:1px;animation:blink 1s step-start infinite}
 
-html, body, #__next {
-  height: 100%;
-}
+/* Bolhas */
+.message{padding:12px 16px;border-radius:16px;max-width:80%;line-height:1.5;word-wrap:break-word;white-space:pre-wrap;margin-bottom:8px;font-family:'Inter',sans-serif}
+.user{background-color:#2563eb;color:white;margin-left:auto;text-align:right}
+.assistant-F{background-color:#d1fae5;color:#065f46}
+.assistant-T{background-color:#fef3c7;color:#78350f}
+.assistant-C{background-color:#ede9fe;color:#4c1d95}
+.assistant-X{background-color:#fee2e2;color:#991b1b}
 
-body {
-  margin: 0;
-  background: var(--bg);
-  color: #111;
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-}
+/* Scroll container */
+.chat-container{overflow-y:auto;flex:1;padding:12px;display:flex;flex-direction:column}
