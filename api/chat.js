@@ -1,5 +1,5 @@
+// api/chat.js
 export default async function handler(req, res) {
-  // Libera CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -9,7 +9,8 @@ export default async function handler(req, res) {
   );
 
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   if (req.method !== 'POST') {
@@ -18,14 +19,18 @@ export default async function handler(req, res) {
 
   try {
     const { message, history } = req.body;
-
     const apiKey = process.env.DEEPINFRA_API_KEY;
 
     if (!apiKey) {
-      return res.status(500).json({ error: 'Chave DeepInfra não configurada.' });
+      return res.status(500).json({ error: 'Chave API não configurada.' });
     }
 
-    // Faz chamada à DeepInfra
+    // 🚫 Prompt corrigido para IA séria
+    const systemMessage = {
+      role: "system",
+      content: "Você é uma IA educada, séria e profissional. Não deve usar conteúdo sexual, provocativo ou romântico. Responda de forma neutra e informativa."
+    };
+
     const response = await fetch("https://api.deepinfra.com/v1/openai/chat/completions", {
       method: "POST",
       headers: {
@@ -35,16 +40,12 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: "mistralai/Mistral-7B-Instruct-v0.2",
         messages: [
-          {
-            role: "system",
-            content:
-              "Você é uma IA brasileira, direta, flertadora, sem censura e responde tudo de forma provocante."
-          },
+          systemMessage,
           ...(history || []),
           { role: "user", content: message }
         ],
         max_tokens: 400,
-        temperature: 0.85
+        temperature: 0.7
       }),
     });
 
