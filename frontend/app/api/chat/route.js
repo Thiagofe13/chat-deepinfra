@@ -133,4 +133,5 @@ export async function POST(req) {
     console.error(isTimeout ? "DeepInfra Timeout (45s)" : err);
     return NextResponse.json({ error: err.message || "Erro interno" }, { status: 500 });
   }
-}
+}     
+**Vá na Vercel e mude SÓ A CHAVE:**
